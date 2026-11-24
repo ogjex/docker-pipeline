@@ -1,0 +1,30 @@
+# Vim swap files
+*.swp
+*.swo
+*.swn
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Secrets / environment
+.env
+.env.*
+!.env.example
+
+# Forgejo (bind-mounted data and config; conf/ holds app.ini with secrets)
+forgejo/forgejo-data/
+forgejo/conf/
+forgejo-data/
+conf/
+
+# Forgejo runner (config.yml contains the runner UUID and token)
+forgejo-runner/data/
+runner-data/
+
+# DefectDojo (upstream repo clone; it has its own git history)
+defectdojo/
+
+# Local database dumps and backups
+*.sql
+*.tar.gz
