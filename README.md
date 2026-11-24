@@ -48,6 +48,8 @@ Go to localhost:3000 and log in to Forgejo using the default admin password: adm
 
 From here on we interact with Forgejo using the rest API, to create new repos, adding files, creating templates and the like.
 
+You can run new-repo.sh to test this.
+
 ### Dependency Track
 
 For VM RAM limitations, ``max_map_count`` must be set to 524288 and added to kernel parameters:
