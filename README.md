@@ -102,8 +102,8 @@ Generate a token with type Global Analysis Token, name it forgejo-ci, and pick a
 Defectdojo requires to use their own official docker compose file.
 
 ```
-git clone https://github.com/DefectDojo/django-DefectDojo /opt/defectdojo
-cd /opt/defectdojo
+git clone https://github.com/DefectDojo/django-DefectDojo /opt/docker-pipeline/defectdojo
+cd /opt/docker-pipeline/defectdojo
 chmod +x ./docker/docker-compose-check.sh
 bash ./docker/docker-compose-check.sh
 ```
@@ -150,6 +150,8 @@ curl -i -X POST http://<VM3-IP>:<port>/api/v2/import-scan/ \
 ```
 
 # Starting a workflow
+
+- Copy "env.example" to .env, fill in, and: chmod 600 .env (do not commit it, also part of .gitignore)
 
 
 ## Notes
