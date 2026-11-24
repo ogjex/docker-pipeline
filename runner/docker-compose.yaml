@@ -1,0 +1,18 @@
+# ~/forgejo-runner/compose.yaml
+networks:
+  forgejo:
+    external: true
+
+services:
+  runner:
+    image: code.forgejo.org/forgejo/runner:13
+    container_name: forgejo-runner
+    restart: unless-stopped
+    networks: [forgejo]
+    user: "0:0"
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: forgejo-runner --config /data/config.yml daemon

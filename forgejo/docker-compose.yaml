@@ -1,0 +1,22 @@
+networks:
+  forgejo:
+    name: forgejo
+
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:17-rootless
+    container_name: forgejo
+    restart: unless-stopped
+    user: "1000:100"
+    networks: [forgejo]
+    environment:
+      - FORGEJO__server__ROOT_URL=http://forgejo:3000/
+      - FORGEJO__server__SSH_PORT=2222
+      - FORGEJO__actions__ENABLED=true
+    volumes:
+      - ./forgejo-data:/var/lib/gitea
+      - ./conf:/etc/gitea
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "2222:2222"

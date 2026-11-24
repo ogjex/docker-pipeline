@@ -45,11 +45,35 @@ Go to localhost:3000 and log in to Forgejo using the default admin password: adm
     - write organization
     - write repository
     - write user
+- create an organization wide runner called "local-runner" and not down uuid and token
 
 From here on we interact with Forgejo using the rest API, to create new repos, adding files, creating templates and the like.
 
 You can run new-repo.sh to test this.
 
+### Forgejo runner
+The forgejo runner needs to register with forgejo through its data/config.yml file.
+Run ``docker compose up -d", then add the following:
+
+```
+connections:
+    forgejo:
+      url: http://forgejo:3000/
+      uuid: <uuid from forgejo (need to create a runner first)>
+      token: <token from forgejo (need to create a runner first)>
+      labels:
+        - "ubuntu-latest:docker://catthehacker/ubuntu:act-latest"
+        - "docker:docker://node:20-bookworm"
+´´´
+add the runner to the network by adding the following:
+´´´
+network: "forgejo"
+´´´
+
+run ``docker compose down && docker compose up -d`` 
+
+The runner should show as online on the list of forgejo runners.
+ 
 ### Dependency Track
 
 For VM RAM limitations, ``max_map_count`` must be set to 524288 and added to kernel parameters:
@@ -107,8 +131,55 @@ cd /opt/docker-pipeline/defectdojo
 chmod +x ./docker/docker-compose-check.sh
 bash ./docker/docker-compose-check.sh
 ```
+
 The check needs to return positive. 
 
+#### port clash
+
+DefectDojo's nginx publishes 8080, which your Dependency-Track frontend already uses. Create /opt/defectdojo/compose.local.yaml, which also joins DefectDojo to the forgejo network so runner jobs can reach it:
+
+```yaml
+networks:
+  forgejo:
+    external: true
+
+services:
+  nginx:
+    ports: !override
+      - "8082:8080"
+    networks:
+      default: {}
+      forgejo:
+        aliases: [defectdojo]
+```
+
+The !override tag replaces the upstream port list instead of adding to it, and needs Docker Compose 2.24 or newer. Check with docker compose version. Then tell Compose to load both files by creating /opt/defectdojo/.env:
+
+``COMPOSE_FILE=docker-compose.yml:compose.local.yaml``
+
+If the repo already has a .env, append that line instead of overwriting it. Confirm the merge before starting:
+
+```bash
+docker compose config | grep -A3 "published"
+```
+
+You should see 8082 and no 8080.
+
+3. Start it
+
+```bash
+docker compose build        # or `docker compose pull` if you prefer prebuilt images
+docker compose up -d
+docker compose logs -f initializer
+```
+
+The initializer can take up to about 3 minutes. When it finishes, get the generated admin password:
+
+```bash
+docker compose logs initializer | grep "Admin password:"
+```
+
+#### existing volume errors
 On some occasions, a  media volume called "threats" is already created. Docker compose down and remove this:
 ```
 docker compose down

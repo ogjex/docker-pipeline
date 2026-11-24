@@ -19,7 +19,7 @@ forgejo-data/
 conf/
 
 # Forgejo runner (config.yml contains the runner UUID and token)
-forgejo-runner/data/
+runner/data/
 runner-data/
 
 # DefectDojo (upstream repo clone; it has its own git history)
