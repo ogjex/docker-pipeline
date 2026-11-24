@@ -1,0 +1,60 @@
+name: pr-security
+on: [pull_request]
+
+jobs:
+  secrets:
+    runs-on: scanner
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: betterleaks git . --redact --no-banner
+
+  sonar:
+    runs-on: scanner
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: >
+          sonar-scanner
+          -Dsonar.host.url=${{ vars.SONAR_URL }}
+          -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+          -Dsonar.projectKey=${{ github.event.repository.name }}
+          -Dsonar.qualitygate.wait=true
+
+  sbom:
+    runs-on: scanner
+    steps:
+      - uses: actions/checkout@v4
+      - run: syft dir:. -o cyclonedx-json=sbom.json
+      - run: ./ci/dt-gate.sh
+        env:
+          DT_URL: ${{ vars.DT_URL }}
+          DT_KEY: ${{ secrets.DT_TOKEN }}
+          PROJECT: ${{ github.event.repository.name }}
+          VERSION: ${{ github.head_ref }}
+          FORGEJO_TOKEN: ${{ secrets.CI_PR_TOKEN }}
+          API: ${{ github.server_url }}/api/v1/repos/${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+
+  iac:
+    runs-on: scanner
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./ci/iac-gate.sh
+        env:
+          FORGEJO_TOKEN: ${{ secrets.CI_PR_TOKEN }}
+          API: ${{ github.server_url }}/api/v1/repos/${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+
+  report:
+    runs-on: scanner
+    needs: [secrets, sonar, sbom, iac]
+    if: always()
+    steps:
+      - run: |
+          body=$(printf '### Security checks\n| Check | Result |\n|---|---|\n| Secrets (Betterleaks) | %s |\n| Code quality (SonarQube) | %s |\n| Dependencies (Dependency-Track) | %s |\n| IaC (Trivy) | %s |\n\n[Open run logs](%s/%s/actions)\n' \
+            "${{ needs.secrets.result }}" "${{ needs.sonar.result }}" "${{ needs.sbom.result }}" "${{ needs.iac.result }}" \
+            "${{ github.server_url }}" "${{ github.repository }}")
+          jq -n --arg b "$body" '{body:$b}' | curl -sS -f -X POST \
+            -H "Authorization: token ${{ secrets.CI_PR_TOKEN }}" -H "Content-Type: application/json" -d @- \
+            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"

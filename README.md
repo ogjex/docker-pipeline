@@ -169,4 +169,11 @@ Edit /etc/hosts:
 
 ``XXXXX``
 
+# Backlog:
 
+´´´
+- update scripts to work with JUST
+- set up to easily integrate into KIND
+- 
+
+```
