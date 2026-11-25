@@ -181,16 +181,17 @@ docker compose logs initializer | grep "Admin password:"
 
 #### existing volume errors
 On some occasions, a  media volume called "threats" is already created. Docker compose down and remove this:
-```
+
+```bash
 docker compose down
 docker volume rm defectdojo_defectdojo_media
 docker compose up -d
 docker compose logs -f initializer
 ```
+
 (You can also check if the volume is present before running the container:)
 ``cd /opt/defectdojo
 sudo ls -la /var/lib/docker/volumes/defectdojo_defectdojo_media/_data``
-
 
 Cd to the Defectdojo folder and run ``docker compose up -d``.
 
